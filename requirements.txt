@@ -1,5 +1,5 @@
 streamlit
 pandas
 pandasai
-pandasai_litellm
+pandasai-litellm
 matplotlib
