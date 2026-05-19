@@ -3,6 +3,12 @@ import pandas as pd
 import pandasai as pai
 from pandasai_litellm import LiteLLM
 from matplotlib.figure import Figure
+import os
+import streamlit as st
+
+# Force the environment to read the Streamlit secret key
+if "OPENAI_API_KEY" in st.secrets:
+    os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
 st.set_page_config(page_title="PandasLLM EDA", layout='wide')
 st.title("EDA using Natural Language")
