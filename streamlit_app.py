@@ -4,22 +4,21 @@ import pandasai as pai
 from pandasai_litellm import LiteLLM
 from matplotlib.figure import Figure
 import os
-import streamlit as st
-
-# Force the environment to read the Streamlit secret key
-if "OPENAI_API_KEY" in st.secrets:
-    os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
 st.set_page_config(page_title="PandasLLM EDA", layout='wide')
 st.title("EDA using Natural Language")
 
 try:
     ai_api_key = st.secrets["OPENAI_API_KEY"]
+    # Force the environment to read the Streamlit secret key as a backup
+    os.environ["OPENAI_API_KEY"] = ai_api_key
 except Exception as e:
-    ai_api_key  = st.text_input("Enter OpenAI api key: ", type='password')
+    ai_api_key = st.text_input("Enter OpenAI api key: ", type='password')
     if not ai_api_key:
         st.info("You must add your API key to continue!")
         st.stop()
+    else:
+        os.environ["OPENAI_API_KEY"] = ai_api_key
 
 csv_data = st.sidebar.file_uploader("Upload CSV file", type='csv')
 
@@ -36,8 +35,8 @@ if csv_data:
             st.session_state.template_selector = "Select a template..."
 
     user_query = st.text_input(
-        "Query your data in natural langauge",
-        key = "user_query_widget"
+        "Query your data in natural language",
+        key="user_query_widget"
     )
 
     template = st.selectbox("Quick questions", [
@@ -54,19 +53,20 @@ if csv_data:
         on_change=apply_template
     )
 
-
     if st.button("Analyze"):
         if not user_query.strip():
             st.warning("Please enter a query!")
         else:
             with st.spinner("Processing your request"):
                 try:
+                    # FIX: Explicitly pass the api_key parameter to LiteLLM here
                     llm = LiteLLM(
-                        model = 'gpt-4o-mini',
-                        temperature = 0
+                        model='gpt-4o-mini',
+                        api_key=ai_api_key,
+                        temperature=0
                     )
 
-                    pai.config.set({"llm" : llm})
+                    pai.config.set({"llm": llm})
 
                     smart_df = pai.SmartDataframe(df)
 
@@ -79,7 +79,8 @@ if csv_data:
                         st.dataframe(answer)
                     elif isinstance(answer, Figure):
                         st.pyplot(answer)
-                    elif answer_str.strip().endswith(('.png', '.jpg', '.jpeg')):                        st.image(answer_str.strip())   
+                    elif answer_str.strip().endswith(('.png', '.jpg', '.jpeg')):
+                        st.image(answer_str.strip())   
                     else:
                         st.write(answer)  # fallback to just showing whatever answer
 
